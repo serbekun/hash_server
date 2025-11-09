@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Encrypt/Decrypt</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>encode / decode Photo</h1>
+        
+        <div class="mode-selector">
+            <button id="encryptMode" class="active">encode</button>
+            <button id="decryptMode">decode</button>
+        </div>
+
+        <div class="file-upload">
+            <label for="fileInput" id="fileLabel">choice file</label>
+            <input type="file" id="fileInput" hidden>
+            <div id="fileName">file not choice</div>
+        </div>
+
+        <div class="password-input">
+            <label for="password">password:</label>
+            <input type="password" id="password" placeholder="enter password">
+        </div>
+
+        <button id="processBtn">doing file</button>
+        <div id="status"></div>
+        <a id="downloadLink" hidden></a>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
