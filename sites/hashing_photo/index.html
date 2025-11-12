@@ -1,15 +1,201 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="eg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Encrypt/Decrypt</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        h1 {
+            margin-bottom: 24px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .mode-selector {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .mode-selector button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background-color: #2d2d2d;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #b0b0b0;
+        }
+
+        .mode-selector button.active {
+            background-color: #0d47a1;
+            color: #ffffff;
+        }
+
+        .mode-selector button:hover:not(.active) {
+            background-color: #3a3a3a;
+        }
+
+        .file-upload {
+            margin-bottom: 20px;
+            border: 2px dashed #0d47a1;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            background-color: #2d2d2d;
+        }
+
+        .file-upload:hover {
+            border-color: #1565c0;
+            background-color: #3a3a3a;
+        }
+
+        #fileLabel {
+            display: inline-block;
+            background-color: #0d47a1; 
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        #fileLabel:hover {
+            background-color: #1565c0;
+        }
+
+        #fileName {
+            margin-top: 10px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .password-input {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .password-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .password-input input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .password-input input:focus {
+            outline: none;
+            border-color: #42a5f5;
+            box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2);
+        }
+
+        .password-input input::placeholder {
+            color: #888;
+        }
+
+        #processBtn {
+            background-color: #0d47a1;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        #processBtn:hover {
+            background-color: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #processBtn:disabled {
+            background-color: #484f58;
+            cursor: not-allowed;
+            color: #8b949e;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            border: 1px solid;
+        }
+
+        #status.success {
+            background-color: #1c532c;
+            color: #3fb950;
+            border-color: #238636;
+        }
+
+        #status.error {
+            background-color: #4a2121;
+            color: #f85149;
+            border-color: #da3633;
+        }
+
+        #downloadLink {
+            display: inline-block;
+            margin-top: 15px;
+            color: #42a5f5;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        #downloadLink:hover {
+            color: #90caf9;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>encode / decode Photo</h1>
-        
+        <h1>encode / decode File</h1>
         <div class="mode-selector">
             <button id="encryptMode" class="active">encode</button>
             <button id="decryptMode">decode</button>
@@ -31,6 +217,105 @@
         <a id="downloadLink" hidden></a>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const encryptModeBtn = document.getElementById('encryptMode');
+            const decryptModeBtn = document.getElementById('decryptMode');
+            const fileInput = document.getElementById('fileInput');
+            const fileLabel = document.getElementById('fileLabel');
+            const fileName = document.getElementById('fileName');
+            const passwordInput = document.getElementById('password');
+            const processBtn = document.getElementById('processBtn');
+            const statusDiv = document.getElementById('status');
+            const downloadLink = document.getElementById('downloadLink');
+
+            let currentMode = 'encrypt';
+
+            // Handler for toggle mode
+            encryptModeBtn.addEventListener('click', function() {
+                currentMode = 'encrypt';
+                encryptModeBtn.classList.add('active');
+                decryptModeBtn.classList.remove('active');
+                updateProcessButtonText();
+            });
+
+            decryptModeBtn.addEventListener('click', function() {
+                currentMode = 'decrypt';
+                decryptModeBtn.classList.add('active');
+                encryptModeBtn.classList.remove('active');
+                updateProcessButtonText();
+            });
+
+            // Handler for choice file
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    fileName.textContent = fileInput.files[0].name;
+                } else {
+                    fileName.textContent = 'file not choice';
+                }
+            });
+
+            // Handler for handler button 
+            processBtn.addEventListener('click', function() {
+                if (!fileInput.files.length) {
+                    showStatus('please, choice file', 'error');
+                    return;
+                }
+
+                if (!passwordInput.value) {
+                    showStatus('please, input password', 'error');
+                    return;
+                }
+
+                processFile();
+            });
+
+            function updateProcessButtonText() {
+                processBtn.textContent = currentMode === 'encrypt' ? 'encrypt file' : 'decrypt file';
+            }
+
+            function processFile() {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('password', passwordInput.value);
+                formData.append('mode', currentMode);
+
+                processBtn.disabled = true;
+                showStatus('Processing file...', '');
+
+                fetch('/process_file', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showStatus('File successfully processed!', 'success');
+                        // We offer download processed file
+                        downloadLink.href = '/download/' + data.output_filename;
+                        downloadLink.download = data.output_filename;
+                        downloadLink.textContent = 'Download processed file';
+                        downloadLink.hidden = false;
+                    } else {
+                        showStatus('Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    showStatus('Network error: ' + error, 'error');
+                })
+                .finally(() => {
+                    processBtn.disabled = false;
+                });
+            }
+
+            function showStatus(message, type) {
+                statusDiv.textContent = message;
+                statusDiv.className = type ? type : '';
+            }
+
+            // Button text init
+            updateProcessButtonText();
+        });
+    </script>
 </body>
 </html>
