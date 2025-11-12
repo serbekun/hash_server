@@ -1,28 +1,27 @@
 from flask import Flask, request, send_from_directory, jsonify
 import os
+
 from XORFileCipher import encrypt_file, decrypt_file
+from config import Config
 
 app = Flask(__name__)
 
+# cancel show don't needed logs 
 import logging
 log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = True
 
-@app.route("/hello_world")
-def hello_world():
-    client_ip = request.remote_addr
-    print(f"{client_ip} request hello_world")
-    return "Hello, World!"
-
-@app.route("/hashing_photo")
+@app.route("/hashing_file")
 def hashing_photo():
-    print(f"{request.remote_addr} request hashing_photo")
-    return send_from_directory(Config.SITES_FOLDER + Config.HASHING_PHOTO_SITE, "index.html")
+    print(f"{request.remote_addr} request hashing_file")
+    return send_from_directory(Config.Paths.SITES_FOLDER + Config.Paths.HASHING_FILE_SITE, "index.html")
 
-@app.route("/sites/hashing_photo/path:filename")
+
+@app.route("/sites/hashing_file/path:filename")
 def hashing_photo_static(filename):
-    return send_from_directory(Config.SITES_FOLDER + Config.HASHING_PHOTO_SITE, filename)
+    return send_from_directory(Config.Paths.SITES_FOLDER + Config.Paths.HASHING_FILE_SITE, filename)
+
 
 @app.route("/process_file", methods=["POST"])
 def process_file():
@@ -66,29 +65,30 @@ def process_file():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+
 @app.route("/download/<filename>")
 def download_file(filename):
     return send_from_directory("uploads", filename, as_attachment=True)
+
 
 @app.route("/")
 def ok():
     print(f"{request.remote_addr} request /")
 
     html = ""
-    with open(Config.SITES_FOLDER + Config.MAIN_SITE + "index.html", "r") as f:
+    with open(Config.Paths.SITES_FOLDER + Config.Paths.MAIN_SITE + "index.html", "r") as f:
         html = f.read()
 
     return f"{html}"
 
-from config import Config
 
 def main():
     os.makedirs("uploads", exist_ok=True)
-    os.makedirs(Config.SITES_FOLDER + Config.HASHING_FILE_SITE, exist_ok=True)
+    os.makedirs(Config.Paths.SITES_FOLDER + Config.Paths.HASHING_FILE_SITE, exist_ok=True)
 
-    print(f"server started on http://{Config.HOST}:{Config.PORT}")
-    app.run(host=Config.HOST, port=Config.PORT)
+    print(f"server started on http://{Config.Link.HOST}:{Config.Link.PORT}")
+    app.run(host=Config.Link.HOST, port=Config.Link.PORT)
 
 
 if __name__ == "__main__":
