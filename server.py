@@ -9,13 +9,6 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = True
 
-SERVER_SUDO_PASSWORD = "qwerty"
-USERS_DATA_SAVE_FOLDER_PATH = "users/"
-
-SITES_FOLDER = "sites/"
-MAIN_SITE = "main/"
-HASHING_PHOTO_SITE = "hashing_photo/"
-
 @app.route("/hello_world")
 def hello_world():
     client_ip = request.remote_addr
@@ -25,11 +18,11 @@ def hello_world():
 @app.route("/hashing_photo")
 def hashing_photo():
     print(f"{request.remote_addr} request hashing_photo")
-    return send_from_directory(SITES_FOLDER + HASHING_PHOTO_SITE, "index.html")
+    return send_from_directory(Config.SITES_FOLDER + Config.HASHING_PHOTO_SITE, "index.html")
 
 @app.route("/sites/hashing_photo/path:filename")
 def hashing_photo_static(filename):
-    return send_from_directory(SITES_FOLDER + HASHING_PHOTO_SITE, filename)
+    return send_from_directory(Config.SITES_FOLDER + Config.HASHING_PHOTO_SITE, filename)
 
 @app.route("/process_file", methods=["POST"])
 def process_file():
@@ -83,17 +76,20 @@ def ok():
     print(f"{request.remote_addr} request /")
 
     html = ""
-    with open(SITES_FOLDER + MAIN_SITE + "index.html", "r") as f:
+    with open(Config.SITES_FOLDER + Config.MAIN_SITE + "index.html", "r") as f:
         html = f.read()
 
     return f"{html}"
-    from config import Config
 
 from config import Config
 
-if __name__ == "__main__":
+def main():
     os.makedirs("uploads", exist_ok=True)
-    os.makedirs(SITES_FOLDER + HASHING_PHOTO_SITE, exist_ok=True)
+    os.makedirs(Config.SITES_FOLDER + Config.HASHING_FILE_SITE, exist_ok=True)
 
     print(f"server started on http://{Config.HOST}:{Config.PORT}")
     app.run(host=Config.HOST, port=Config.PORT)
+
+
+if __name__ == "__main__":
+    main()
