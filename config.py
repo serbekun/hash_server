@@ -12,7 +12,7 @@ class Config:
         - HOST
         - PORT
         """
-        HOST = "192.168.3.19"
+        HOST = "192.168.3.5"
         PORT = 2222
 
     class Paths:
@@ -25,6 +25,7 @@ class Config:
         SITES_FOLDER = "sites/"
         MAIN_SITE = "main/"
         HASHING_FILE_SITE = "hashing_file/"
+        HASHING_TEXT_BASE64 = "hashing_text_base64/"
     
     class FileManaging:
         LEAVE_UPLOADED_FILE = True
