@@ -17,6 +17,24 @@ def admin():
     print(response.text)
     
 
+def clear_upload():
+    token = input("input token: ")
+
+    data = {"token": token}
+
+    response = requests.post(URL + "/admin/clear_uploads", json=data)
+    print(response.text)
+
+
+def list_uploads():
+    token = input("input token: ")
+
+    data = {"token": token}
+
+    response = requests.post(URL + "/admin/list_uploads", json=data)
+    print(response.text)
+
+
 def main():
     print("Welcome to admin client")
 
@@ -27,8 +45,12 @@ def main():
             break
         elif answer == "admin":
             admin()
+        elif answer == "clear_uploads":
+            clear_upload()
+        elif answer == "list_uploads":
+            list_uploads()
         else:
-            print("Unknonw command")
+            print("Unknown command")
         
 
 if __name__ == "__main__":
