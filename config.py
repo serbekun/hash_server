@@ -33,6 +33,10 @@ class Config:
         class Tokens:
             TOKENS_FOLDER = "tokens/"
             ADMIN_TOKENS = "admin/tokens.txt"
+            DOWNLOAD_TOKENS = "download/tokens.txt"
+
+        class Client:
+            UPLOADS = "uploads/"
     
     class FileManaging:
         LEAVE_UPLOADED_FILE = True

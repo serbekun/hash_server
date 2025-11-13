@@ -6,7 +6,9 @@ from XORFileCipher import encrypt_file, decrypt_file
 from config import Config
 from Tokens import Tokens
 
-admin_tokens = Tokens(Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.ADMIN_TOKENS, 15)
+admin_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.ADMIN_TOKENS, token_length=15, token_start="admin_")
+download_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.DOWNLOAD_TOKENS, token_length=15, token_start="download_")
+
 app = Flask(__name__)
 
 # cancel show don't needed logs 
@@ -60,20 +62,39 @@ def process_file():
         else:
             output_path = decrypt_file(file_path, password)
         
+        token = download_tokens.gen_token()
+        download_tokens.add_token(token)
+
         # Return result
         return jsonify({
             "success": True,
             "message": "File processed successfully",
-            "output_filename": os.path.basename(output_path)
+            "output_filename": os.path.basename(output_path),
+            "download_token": token
         })
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/download/hashing_photo/<filename>")
+@app.route("/download/hashing_photo/<filename>", methods=["POST"])
 def download_file(filename):
-    print(f"{request.remote_addr} request download {filename}")
+
+    print(f"{request.remote_addr} request download {filename}:")
+
+    data = request.get_json(force=True, silent=True)
+
+    if not data or "token" not in data:
+        return "Error: labels don't contain 'token'", 400
+    
+    token = data["token"]
+    if not download_tokens.check_token(token):
+        print(" Incorrect token permission denied")
+        return "Permission Denied"
+    
+    download_tokens.remove_token(token)
+
+    print(f" Send {filename}")
     return send_from_directory("uploads", filename, as_attachment=True)
 
 
@@ -126,24 +147,79 @@ def admin():
     token = data["token"]
 
     if admin_tokens.check_token(token):
-        return "its live good"
+        text = "" \
+        "/admin/uploads"
+        ""
+
+        return text
     else:
         return "Permission Denied"
 
+@app.route("/admin/list_uploads", methods=["POST"])
+def admin_list_uploads():
+    print(f"{request.remote_addr} request /admin/clear_uploads")
+
+    data = request.get_json(force=True, silent=True)
+
+    if not data or not "token" in data:
+        return "Error not label 'token' in json", 400
+    
+    token = data["token"]
+
+    if not admin_tokens.check_token(token):
+        return "Permission Denied"
+
+    directory_path = Config.Paths.Client.UPLOADS
+
+    files = ""
+
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        if os.path.isfile(file_path):
+            files += file_path + "\n"
+    
+    return files
+
+
+@app.route("/admin/clear_uploads", methods=["POST"])
+def admin_clear_upload():
+    print(f"{request.remote_addr} request /admin/clear_uploads")
+
+    data = request.get_json(force=True, silent=True)
+
+    if not data or not "token" in data:
+        return "Error not label 'token' in json", 400
+    
+    token = data["token"]
+
+    if not admin_tokens.check_token(token):
+        return "Permission Denied"
+    
+    directory_path = Config.Paths.Client.UPLOADS
+
+    if not os.path.isdir(directory_path):
+        return f"Error: Directory '{directory_path}' does not exist."
+
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        if os.path.isfile(file_path):
+            try:
+                os.remove(file_path)
+            except OSError as e:
+                return "Error: removing files was not ended"
+    return "Successfully removed all files"
+    
 
 @app.route("/")
 def ok():
     print(f"{request.remote_addr} request /")
 
-    html = ""
-    with open(Config.Paths.SITES_FOLDER + Config.Paths.MAIN_SITE + "index.html", "r") as f:
-        html = f.read()
-
-    return f"{html}"
+    return send_from_directory(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.MAIN_SITE, "index.html")
 
 
 def create_server_dirs():
     os.makedirs("uploads", exist_ok=True)
+    os.makedirs("tokens", exist_ok=True)
     os.makedirs(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.HASHING_FILE_SITE, exist_ok=True)
 
 

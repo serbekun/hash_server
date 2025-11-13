@@ -8,8 +8,9 @@ class Tokens:
 
     def __init__(
         self, token_file: str,
-        hash_length: str,
-        symbols: str = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM123456789-_"
+        token_length: str,
+        symbols: str = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM123456789",
+        token_start: str = ""
         ):
         """
         # init Tokens object
@@ -27,7 +28,9 @@ class Tokens:
 
         self.token_file = token_file
         self.symbols = symbols
-        self.hash_length = hash_length
+        self.token_length = token_length
+        self.token_start = token_start
+
 
     def gen_token(self) -> str:
         """
@@ -40,8 +43,9 @@ class Tokens:
         ```
         """
         token = ""
-        for _ in range(15):
+        for _ in range(self.token_length):
             token += random.choice(self.symbols)
+        token = self.token_start + token
         return token
 
 

@@ -294,6 +294,50 @@
                 processBtn.textContent = currentMode === 'encrypt' ? 'Encrypt File' : 'Decrypt File';
             }
 
+            downloadLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const filename = this.dataset.filename;
+                const token = this.dataset.token;
+                
+                if (!filename || !token) {
+                    showStatus('Download data missing', 'error');
+                    return;
+                }
+
+                showStatus('Downloading file...', '');
+
+                fetch('/download/hashing_photo/' + filename, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Download failed');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showStatus('Download completed!', 'success');
+                })
+                .catch(error => {
+                    showStatus('Download error: ' + error, 'error');
+                });
+            });
+
             function processFile() {
                 const formData = new FormData();
                 formData.append('file', fileInput.files[0]);
@@ -311,9 +355,8 @@
                 .then(data => {
                     if (data.success) {
                         showStatus('File processed successfully!', 'success');
-                        // Offer to download the processed file
-                        downloadLink.href = '/download/hashing_photo/' + data.output_filename;
-                        downloadLink.download = data.output_filename;
+                        downloadLink.dataset.filename = data.output_filename;
+                        downloadLink.dataset.token = data.download_token;
                         downloadLink.textContent = 'Download processed file';
                         downloadLink.hidden = false;
                     } else {
