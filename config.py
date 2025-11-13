@@ -1,3 +1,5 @@
+import url_info
+
 class Config:
     """
     Class for contain info about
@@ -12,20 +14,26 @@ class Config:
         - HOST
         - PORT
         """
-        HOST = "192.168.3.5"
-        PORT = 2222
+        HOST = url_info._IP
+        PORT = url_info._PORT
 
     class Paths:
         """
         Class contain
-        - SITES_FOLDER
-        - MAIN_SITE
-        - HASHING_FILE_SITE
+        - class Sites
+        - class Tokens
         """
-        SITES_FOLDER = "sites/"
-        MAIN_SITE = "main/"
-        HASHING_FILE_SITE = "hashing_file/"
-        HASHING_TEXT_BASE64 = "hashing_text_base64/"
+
+        class Sites:
+            SITES_FOLDER = "sites/"
+            MAIN_SITE = "main/"
+            HASHING_FILE_SITE = "hashing_file/"
+            HASHING_TEXT_BASE64 = "hashing_text_base64/"
+
+        class Tokens:
+            TOKENS_FOLDER = "tokens/"
+            ADMIN_TOKENS = "admin/tokens.txt"
     
     class FileManaging:
         LEAVE_UPLOADED_FILE = True
+        SAVE_BASE64_TEXT = True

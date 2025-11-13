@@ -1,12 +1,164 @@
 <!DOCTYPE html>
-<html lang="eg">
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 text encode / decode</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#1976d2',
+                            600: '#1565c0'
+                        },
+                        dark: {
+                            900: '#121212',
+                            800: '#1e1e1e',
+                            700: '#2d2d2d',
+                            600: '#3a3a3a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-    <title>Base64 encode / decode</title>    
+<body class="bg-dark-900 min-h-screen text-gray-100">
+    <div class="container mx-auto px-4 py-12 max-w-4xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 text-white">Base64 Encode / Decode</h1>
+            <p class="text-lg text-gray-400">Encode and decode text using Base64</p>
+        </header>
 
-    <body>
-        
-    </body>
+        <main class="bg-dark-800 rounded-xl shadow-2xl border border-dark-700 p-6 md:p-8">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <label class="text-white font-medium">Input Text</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="mode" value="encode" checked class="form-radio text-primary-500">
+                                <span class="ml-2">Encode</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="mode" value="decode" class="form-radio text-primary-500">
+                                <span class="ml-2">Decode</span>
+                            </label>
+                        </div>
+                    </div>
+                    <textarea id="inputText" class="w-full h-64 p-4 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none" placeholder="Enter text to encode or decode..."></textarea>
+                </div>
 
+                <div class="flex flex-col items-center justify-center">
+                    <button id="convertBtn" class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:-translate-y-1 shadow-lg flex items-center">
+                        <i data-feather="repeat" class="mr-2"></i>
+                        Convert
+                    </button>
+                    <div id="copyBtn" class="mt-4 opacity-0 transition-opacity duration-300">
+                        <button class="bg-dark-700 hover:bg-dark-600 text-white py-2 px-4 rounded-lg flex items-center">
+                            <i data-feather="copy" class="mr-2"></i>
+                            Copy
+                        </button>
+                    </div>
+                </div>
 
+                <div class="flex-1">
+                    <label class="text-white font-medium mb-4 block">Result</label>
+                    <textarea id="outputText" readonly class="w-full h-64 p-4 bg-dark-700 border border-dark-600 rounded-lg text-white resize-none" placeholder="Result will appear here..."></textarea>
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="hidden mt-6 text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+                <p class="mt-2 text-gray-400">Processing your request...</p>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        feather.replace();
+
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const convertBtn = document.getElementById('convertBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const modeRadios = document.getElementsByName('mode');
+
+        convertBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            
+            if (!text) {
+                alert('Please enter some text to process');
+                return;
+            }
+
+            let mode;
+            for (const radio of modeRadios) {
+                if (radio.checked) {
+                    mode = radio.value;
+                    break;
+                }
+            }
+
+            const mod = mode === 'encode' ? '1' : '2';
+
+            loadingIndicator.classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/base64', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        mod: mod
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const result = await response.text();
+                outputText.value = result;
+                
+                copyBtn.style.opacity = '1';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                outputText.value = `Error: ${error.message}`;
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        });
+        copyBtn.addEventListener('click', () => {
+            outputText.select();
+            document.execCommand('copy');
+
+            const originalText = copyBtn.querySelector('button').innerHTML;
+            copyBtn.querySelector('button').innerHTML = '<i data-feather="check" class="mr-2"></i>Copied!';
+            feather.replace();
+            
+            setTimeout(() => {
+                copyBtn.querySelector('button').innerHTML = originalText;
+                feather.replace();
+            }, 2000);
+        });
+
+        inputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                convertBtn.click();
+            }
+        });
+    </script>
+</body>
 </html>
