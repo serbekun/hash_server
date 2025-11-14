@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Encryption/Decryption</title>
+    <link rel="stylesheet" href="templates/hashing_file/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>File Encryption / Decryption</h1>
+        <div class="mode-selector">
+            <button id="encryptMode" class="active">Encrypt</button>
+            <button id="decryptMode">Decrypt</button>
+        </div>
+
+        <div class="file-upload">
+            <label for="fileInput" id="fileLabel">Select File</label>
+            <input type="file" id="fileInput" hidden>
+            <div id="fileName">No file selected</div>
+        </div>
+
+        <div class="password-input">
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="Enter password">
+        </div>
+
+        <button id="processBtn">Process File</button>
+        <div id="status"></div>
+        <a id="downloadLink" hidden></a>
+    </div>
+    <script src="/templates/hashing_file/static/script.js"></script>
+</body>
+</html>

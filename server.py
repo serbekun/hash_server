@@ -1,17 +1,23 @@
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, Response, request, send_from_directory, jsonify
 from datetime import datetime
 import base64
 import os
-import time
 
 from XORFileCipher import encrypt_file, decrypt_file
 from config import Config
 from Tokens import Tokens
+from path_traversal_check import PathTraversal
+from logging_utils import Logging
 
-admin_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.ADMIN_TOKENS, token_length=15, token_start="admin_")
+from admin_routes import bp as admin_bp
+
+
 download_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.DOWNLOAD_TOKENS, token_length=15, token_start="download_")
+path_traversal = PathTraversal()
 
 app = Flask(__name__)
+
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
 # cancel show don't needed logs 
 import logging
@@ -19,80 +25,96 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = True
 
-def server_log(log: str) -> None:
-    """
-    Print and save log to file
-    """
-    with open(Config.Paths.Log.LOG_FOLDER + Config.Paths.Log.SERVER_LOG, 'a') as f:
-        try:
-            f.write(f"{log}\n")
-        except FileExistsError:
-            print("Server Error: Error save log")
-        
-    print(log)
-
 @app.route("/hashing_file")
 def hashing_photo():
-    server_log(f"{request.remote_addr} request hashing_file html")
     return send_from_directory(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.HASHING_FILE_SITE, "index.html")
+
+
+@app.route("/templates/<path:path>")
+def serve_templates_static(path):
+    return send_from_directory("templates", path)
 
 
 @app.route("/hashing_text_base64")
 def hashing_text_base64():
-    server_log(f"{request.remote_addr} request hashing_text_base64 html")
+    Logging.server_log(f"{request.remote_addr} request hashing_text_base64 html")
     return send_from_directory(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.HASHING_TEXT_BASE64, "index.html")
 
 
 @app.route("/process_file", methods=["POST"])
 def process_file():
-    server_log(f"{request.remote_addr} request process_file")
+    Logging.server_log(f"{request.remote_addr} request process_file")
+
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    if request.content_length and request.content_length > MAX_FILE_SIZE:
+        Logging.server_log(f"  Error: File too large {request.content_length}")
+        return jsonify({"error": f"File too large. Maximum size is {MAX_FILE_SIZE//1024//1024}MB"}), 413
 
     try:
-        # check exist file in request
+
         if 'file' not in request.files:
-            server_log("  Error: File is not requested")
+            Logging.server_log("  Error: No file provided")
             return jsonify({"error": "No file provided"}), 400
 
         file = request.files['file']
-        if file.filename == '':
-            server_log("  Error: No selected file in requested")
+        if not file or file.filename == '':
+            Logging.server_log("  Error: No selected file")
             return jsonify({"error": "No selected file"}), 400
-        
-        password = request.form.get('password')
-        if not password:
-            server_log("  Error: Password is not requested")
-            return jsonify({"error": "Password is required"}), 400
-        
-        mode = request.form.get('mode')  # 'encrypt' or 'decrypt'
-        if mode not in ['encrypt', 'decrypt']:
-            server_log("  Error: Invalid mode")
-            return jsonify({"error": "Invalid mode"}), 400
-        
-        # temp save uploaded file
-        upload_folder = Config.Paths.Client.UPLOADS
-        if not os.path.exists(upload_folder):
-            os.makedirs(upload_folder) # TODO create function for create all dir and files
-        
-        file_path = os.path.join(upload_folder, file.filename)
-        file.save(file_path)
-        server_log(f"  Save temp file {file.filename}")
 
-        # process files 
-        if mode == 'encrypt':
-            output_path = encrypt_file(file_path, password)
-        else:
-            output_path = decrypt_file(file_path, password)
-        
+        if not path_traversal.allowed_filename(file.filename,):
+            Logging.server_log(f"  Error: Invalid filename {file.filename}")
+            return jsonify({"error": "Invalid filename"}), 400
+
+        password = request.form.get('password', '').strip()
+        if not password:
+            Logging.server_log("  Error: Password is required")
+            return jsonify({"error": "Password is required"}), 400
+
+        if len(password) < 4:
+            Logging.server_log("  Error: Password too short")
+            return jsonify({"error": "Password must be at least 4 characters"}), 400
+
+        mode = request.form.get('mode')
+        if mode not in ['encrypt', 'decrypt']:
+            Logging.server_log(f"  Error: Invalid mode {mode}")
+            return jsonify({"error": "Invalid mode"}), 400
+
+        upload_folder = Config.Paths.Client.UPLOADS
+        os.makedirs(upload_folder, exist_ok=True)
+
+        safe_file_path = path_traversal.safe_join(upload_folder, file.filename)
+        if not safe_file_path:
+            Logging.server_log(f"  Error: Path traversal detected for {file.filename}")
+            return jsonify({"error": "Invalid file path"}), 400
+
+        if os.path.exists(safe_file_path):
+            Logging.server_log(f"  Error: File already exists {safe_file_path}")
+            return jsonify({"error": "File already exists"}), 409
+
+        file.save(safe_file_path)
+        Logging.server_log(f"  Saved temp file {os.path.basename(safe_file_path)}")
+
+        try:
+            if mode == 'encrypt':
+                output_path = encrypt_file(safe_file_path, password)
+            else:
+                output_path = decrypt_file(safe_file_path, password)
+        except Exception as crypto_error:
+            Logging.server_log(f"  Crypto error: {str(crypto_error)}")
+            if os.path.exists(safe_file_path):
+                os.remove(safe_file_path)
+            return jsonify({"error": "File processing failed"}), 500
+
         token = download_tokens.gen_token()
         download_tokens.add_token(token)
 
-        if not Config.FileManaging.LEAVE_UPLOADED_FILE:
+        if not Config.FileManaging.LEAVE_UPLOADED_FILE and os.path.exists(safe_file_path):
             try:
-                os.remove(file_path)
+                os.remove(safe_file_path)
+                Logging.server_log(f"  Removed temp file {os.path.basename(safe_file_path)}")
             except OSError as e:
-                server_log(f"Error: removing temp file {file_path} was not successfully")
+                Logging.server_log(f"  Warning: Failed to remove temp file: {e}")
 
-        # Return result
         return jsonify({
             "success": True,
             "message": "File processed successfully",
@@ -101,27 +123,30 @@ def process_file():
         })
         
     except Exception as e:
-        server_log("  Internal server Error 500")
-        return jsonify({"error": str(e)}), 500
+        Logging.server_log(f"  Internal server error: {str(e)}")
+        if 'safe_file_path' in locals() and os.path.exists(safe_file_path):
+            try:
+                os.remove(safe_file_path)
+            except:
+                pass
+        return jsonify({"error": "Internal server error"}), 500
 
-
-from flask import Response
 
 @app.route("/download/hashing_photo/<filename>", methods=["POST"])
 def download_file(filename):
 
-    server_log(f"{request.remote_addr}")
+    Logging.server_log(f"{request.remote_addr}")
 
     path = os.path.join(Config.Paths.Client.UPLOADS, filename)
 
     data = request.get_json(force=True, silent=True)
     if not data or "token" not in data:
-        server_log("  Error: token missing")
+        Logging.server_log("  Error: token missing")
         return "Error: token missing", 400
 
     token = data["token"]
     if not download_tokens.check_token(token):
-        server_log(" Permission denied")
+        Logging.server_log(" Permission denied")
         return "Permission denied", 403
 
     download_tokens.remove_token(token)
@@ -135,9 +160,9 @@ def download_file(filename):
 
         try:
             os.remove(path)
-            server_log(f"  Deleted {path}")
+            Logging.server_log(f"  Deleted {path}")
         except Exception as e:
-            server_log(f"  Error deleting {path}: {e}")
+            Logging.server_log(f"  Error deleting {path}: {e}")
 
     return Response(
         generate(),
@@ -146,7 +171,6 @@ def download_file(filename):
             "Content-Disposition": f"attachment; filename={filename}"
         }
     )
-
 
 
 @app.route("/base64", methods=["POST"])
@@ -163,11 +187,11 @@ def base64_ed():
     - 1 encode
     - 2 decode
     """
-    server_log(f"{request.remote_addr} request base64_ed")
+    Logging.server_log(f"{request.remote_addr} request base64_ed")
     
     data = request.get_json(force=True, silent=True)
     if not data or "text" not in data or "mod" not in data:
-        server_log(f"  Error: token and mod is not requested")
+        Logging.server_log(f"  Error: token and mod is not requested")
         return "Error: JSON must contain 'text' and 'mod'\n", 400
 
     text = data["text"]
@@ -185,118 +209,14 @@ def base64_ed():
             decoded_bytes = base64.b64decode(text)
             processed_text = decoded_bytes.decode('utf-8')
         except Exception as e:
-            server_log(f"  Error: encoding base64 was not successfully")
+            Logging.server_log(f"  Error: encoding base64 was not successfully")
             return f"Error decoding base64: {str(e)}\n", 400
 
     return processed_text
 
-@app.route("/admin", methods=["POST"])
-def admin():
-    server_log(f"{request.remote_addr} request /admin")
-
-    data = request.get_json(force=True, silent=True)
-
-    if not data or not "token" in data:
-        return "Error not label 'token' in json", 400
-    
-    token = data["token"]
-
-    if admin_tokens.check_token(token):
-        text = "" \
-        "/admin/uploads"
-        ""
-
-        return text
-    else:
-        server_log(" Incorrect token permission dined")
-        return "Permission Denied"
-
-@app.route("/admin/list_uploads", methods=["POST"])
-def admin_list_uploads():
-    server_log(f"{request.remote_addr} request /admin/clear_uploads")
-
-    data = request.get_json(force=True, silent=True)
-
-    if not data or not "token" in data:
-        server_log("  Error: token is not requested")
-        return "Error not label 'token' in json", 400
-    
-    token = data["token"]
-
-    if not admin_tokens.check_token(token):
-        server_log(" Incorrect token permission dined")
-        return "Permission Denied"
-
-    directory_path = Config.Paths.Client.UPLOADS
-
-    files = ""
-
-    for filename in os.listdir(directory_path):
-        file_path = os.path.join(directory_path, filename)
-        if os.path.isfile(file_path):
-            files += file_path + "\n"
-    
-    return files
-
-
-@app.route("/admin/clear_uploads", methods=["POST"])
-def admin_clear_upload():
-    server_log(f"{request.remote_addr} request /admin/clear_uploads")
-
-    data = request.get_json(force=True, silent=True)
-
-    if not data or not "token" in data:
-        server_log("  token is not requested")
-        return "Error not label 'token' in json", 400
-    
-    token = data["token"]
-
-    if not admin_tokens.check_token(token):
-        server_log(" Incorrect token permission dined")
-        return "Permission Denied"
-    
-    directory_path = Config.Paths.Client.UPLOADS
-
-    if not os.path.isdir(directory_path):
-        server_log(f"  Error: Directory '{directory_path}' does not exist.")
-        return f"Error: Directory '{directory_path}' does not exist."
-
-    for filename in os.listdir(directory_path):
-        file_path = os.path.join(directory_path, filename)
-        if os.path.isfile(file_path):
-            try:
-                os.remove(file_path)
-            except OSError as e:
-                server_log("  Error: removing files was not ended")
-                return "Error: removing files was not ended"
-    server_log("  Successfully removed all files")
-    return "Successfully removed all files"
-    
-@app.route("/admin/log", methods=["POST"])
-def admin_log():
-    server_log(f"{request.remote_addr} request /admin/log")
-
-    data = request.get_json(force=True, silent=True)
-
-    if not data or not "token" in data:
-        server_log("  token is not requested")
-        return "token is not requested"
-    
-    token = data["token"]
-
-    if not admin_tokens.check_token(token):
-        server_log(" Incorrect token permission dined")
-        return "Permission Denied"
-
-    log = ""
-    with open(Config.Paths.Log.LOG_FOLDER + Config.Paths.Log.SERVER_LOG, "r") as f:
-        log = f.read()
-    
-    return log
-
 @app.route("/")
 def ok():
-    server_log(f"{request.remote_addr} request /")
+    Logging.server_log(f"{request.remote_addr} request /")
 
     return send_from_directory(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.MAIN_SITE, "index.html")
 
@@ -312,8 +232,8 @@ def main():
     create_server_dirs()
 
     current_time_only = datetime.now().time()
-    server_log(f"={current_time_only}=======================================================")
-    server_log(f"server started on http://{Config.Link.HOST}:{Config.Link.PORT}")
+    Logging.server_log(f"={current_time_only}=======================================================")
+    Logging.server_log(f"server started on http://{Config.Link.HOST}:{Config.Link.PORT}")
     app.run(host=Config.Link.HOST, port=Config.Link.PORT)
 
 
