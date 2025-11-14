@@ -25,7 +25,7 @@ class Config:
         """
 
         class Sites:
-            SITES_FOLDER = "sites/"
+            SITES_FOLDER = "templates/"
             MAIN_SITE = "main/"
             HASHING_FILE_SITE = "hashing_file/"
             HASHING_TEXT_BASE64 = "hashing_text_base64/"

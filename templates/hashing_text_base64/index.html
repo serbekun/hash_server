@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 text encode / decode</title>
+    <link rel="stylesheet" href="/templates/hashing_text_base64/static/style.css">
+</head>
+<body>
+    <div class="container py-12 py-12-mobile">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 text-white">Base64 Encode / Decode</h1>
+            <p class="text-lg text-gray-400">Encode and decode text using Base64</p>
+        </header>
+
+        <main class="bg-dark-800 rounded-xl shadow-2xl border border-dark-700 p-6 md:p-8">
+            <div class="flex flex-col md:flex-row flex-col-mobile gap-6 gap-6-mobile">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <label class="text-white font-medium">Input Text</label>
+                        <div class="flex items-center space-x-4 radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="mode" value="encode" checked class="radio-input">
+                                <span>Encode</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="mode" value="decode" class="radio-input">
+                                <span>Decode</span>
+                            </label>
+                        </div>
+                    </div>
+                    <textarea id="inputText" class="input-textarea" placeholder="Enter text to encode or decode..."></textarea>
+                </div>
+
+                <div class="flex flex-col items-center justify-center">
+                    <button id="convertBtn" class="convert-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="17 1 21 5 17 9"></polyline>
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                            <polyline points="7 23 3 19 7 15"></polyline>
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                        </svg>
+                        Convert
+                    </button>
+                    <div id="copyBtn" class="mt-4 opacity-0 transition-opacity duration-300">
+                        <button class="copy-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <label class="text-white font-medium mb-4 block">Result</label>
+                    <textarea id="outputText" readonly class="output-textarea" placeholder="Result will appear here..."></textarea>
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="loading mt-6">
+                <div class="spinner"></div>
+                <p class="mt-2 text-gray-400">Processing your request...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="/templates/hashing_text_base64/static/script.js"></script>
+</body>
+</html>

@@ -1,5 +1,4 @@
 import requests
-import json
 
 URL = "http://192.168.3.19:2222"
 
