@@ -34,6 +34,14 @@ def list_uploads():
     response = requests.post(URL + "/admin/list_uploads", json=data)
     print(response.text)
 
+def log():
+    token = input("input token: ")
+
+    data = {"token": token}
+
+    response = requests.post(URL + "/admin/log", json=data)
+
+    print(response.text)
 
 def main():
     print("Welcome to admin client")
@@ -49,6 +57,8 @@ def main():
             clear_upload()
         elif answer == "list_uploads":
             list_uploads()
+        elif answer == "log":
+            log()
         else:
             print("Unknown command")
         

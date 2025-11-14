@@ -37,7 +37,11 @@ class Config:
 
         class Client:
             UPLOADS = "uploads/"
+
+        class Log:
+            LOG_FOLDER = "log/"
+            SERVER_LOG = "server.log"
     
     class FileManaging:
-        LEAVE_UPLOADED_FILE = True
+        LEAVE_UPLOADED_FILE = False
         SAVE_BASE64_TEXT = True
