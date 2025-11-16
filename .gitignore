@@ -1,3 +1,10 @@
 admin_client/target/
 __pycache__/
-log/*
+*.log
+*.pyc
+.env
+.vscode/
+uploads/*
+tokens/*
+!uploads/.gitkeep
+!tokens/.gitkeep
