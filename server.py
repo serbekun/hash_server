@@ -7,8 +7,6 @@ from config import Config
 from Tokens import Tokens
 from logging_utils import Logging
 
-
-
 download_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.DOWNLOAD_TOKENS, token_length=15, token_start="download_")
 
 app = Flask(__name__)

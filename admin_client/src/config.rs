@@ -19,7 +19,7 @@ impl Config {
     /// # create default config
     fn create_config() -> Result<(), Box<dyn std::error::Error>> {
         let config = Config {
-            url: "http://192.168.3.5:2222/admin".to_string(),
+            url: "http://localhost/admin".to_string(),
             token: "".to_string(),
         };
 
