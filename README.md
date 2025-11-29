@@ -138,7 +138,7 @@ hash_server/
 ```python
 class Config:
     class Link:
-        HOST = "192.168.3.5"  # Server IP
+        HOST = "localhost-for_example"  # Server IP
         PORT = 2222           # Server port
     
     class FileManaging:
