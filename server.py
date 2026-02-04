@@ -11,7 +11,6 @@ download_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.P
 
 app = Flask(__name__)
 
-
 from routes.admin_routes.admin_routes import bp as admin_bp
 from routes.process_file.process_file import bp as process_file_bp
 
@@ -127,7 +126,6 @@ def ok():
 
     return send_from_directory(Config.Paths.Sites.SITES_FOLDER + Config.Paths.Sites.MAIN_SITE, "index.html")
 
-
 def create_server_dirs():
     os.makedirs("uploads", exist_ok=True)
     os.makedirs("tokens", exist_ok=True)
@@ -142,7 +140,6 @@ def main():
     Logging.server_log(f"={current_time_only}=======================================================")
     Logging.server_log(f"server started on http://{Config.Link.HOST}:{Config.Link.PORT}")
     app.run(host=Config.Link.HOST, port=Config.Link.PORT)
-
 
 if __name__ == "__main__":
     main()

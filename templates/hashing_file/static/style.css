@@ -204,26 +204,3 @@ h1 {
     color: #c2c2c2;
     text-decoration: underline;
 }
-
-.center-link {
-    position: absolute;
-    bottom: 90px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    margin: 20px 0;
-}
-
-.center-link a {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-.center-link a:hover {
-    background-color: #0056b3;
-}
