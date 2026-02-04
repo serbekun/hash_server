@@ -42,7 +42,7 @@ _PORT = 2222
 
 4. **Run the server**
 ```bash
-python server.py
+python main.py
 ```
 
 The server will start at `http://your_server_ip:2222`
@@ -108,11 +108,10 @@ All admin endpoints require valid token in JSON body:
 
 ```
 hash_server/
-├── server.py                 # Main server
-├── config.py                # Configuration
-├── routes/                  # Flask blueprints
-│   ├── admin_routes/
-│   └── process_file/
+├── server.py                # Main server
+│
+├── src/                     # server logic code
+│
 ├── templates/               # Web interfaces
 │   ├── main/
 │   ├── hashing_file/
@@ -121,28 +120,8 @@ hash_server/
 │   └── src/
 ├── tokens/                  # Token storage
 ├── uploads/                 # Temporary file storage
-└── log/                     # Server logs
-```
-
-## Security Features 🛡️
-
-- **Path Traversal Protection** - Secure filename validation
-- **Token Authentication** - Time-limited access tokens
-- **File Size Limits** - 50MB maximum file size
-- **Input Validation** - Comprehensive form validation
-- **Secure File Handling** - Automatic temp file cleanup
-
-## Configuration ⚙️
-
-### Server Settings (`config.py`)
-```python
-class Config:
-    class Link:
-        HOST = "localhost-for_example"  # Server IP
-        PORT = 2222           # Server port
-    
-    class FileManaging:
-        LEAVE_UPLOADED_FILE = False  # Auto-cleanup
+├── log/                     # Server logs
+└── main.py                  # entry point to server
 ```
 
 ### Environment Variables
@@ -152,40 +131,9 @@ export SERVER_IP="your_ip"
 export SERVER_PORT="2222"
 ```
 
-## Development 🛠️
-
-### Adding New Features
-1. Create new blueprint in `routes/`
-2. Add routes in `server.py`
-3. Update admin client if needed
-
-### Testing
-```bash
-# Test file encryption
-python -c "from XORFileCipher import encrypt_file, decrypt_file; print('Cipher test passed')"
-
-# Test server endpoints
-python client.py
-```
-
-## License 📄
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing 🤝
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Support 💬
-
-For support and questions:
-- Open an issue on GitHub
-- Check the documentation in code comments
-
----
 
 **Note**: This server is designed for secure internal networks. For production use, consider additional security measures like HTTPS, rate limiting, and firewall configuration.
