@@ -25,6 +25,14 @@ download_tokens = Tokens(
     token_start="download_"
 )
 
+# Web index of this site
+@app.get("/")
+async def ok(request: Request):
+    Logging.server_log(f"{request.client.host} request /")
+    file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.MAIN_SITE, "index.html")
+    return FileResponse(file_path)
+
+
 # Include routers
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(process_file_router, prefix="/hashing_file", tags=["hashing"])
@@ -138,13 +146,6 @@ async def base64_ed(request: Request):
         return {"error": "Invalid mod value"}, 400
 
     return {"result": processed_text}
-
-
-@app.get("/")
-async def ok(request: Request):
-    Logging.server_log(f"{request.client.host} request /")
-    file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.MAIN_SITE, "index.html")
-    return FileResponse(file_path)
 
 
 def create_server_dirs():
