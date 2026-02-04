@@ -46,6 +46,9 @@ class Config:
             LOG_FOLDER = "log/"
             SERVER_LOG = "server.log"
     
+    class ProcessFileConfig:
+        MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
     class FileManaging:
         LEAVE_UPLOADED_FILE = False
         SAVE_BASE64_TEXT = True

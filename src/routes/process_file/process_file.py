@@ -23,7 +23,7 @@ async def process_file(
 ):
     Logging.server_log(f"{request.client.host} request process_file")
 
-    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    MAX_FILE_SIZE = Config.ProcessFileConfig.MAX_FILE_SIZE
     
     # Check file size
     contents = await file.read()
