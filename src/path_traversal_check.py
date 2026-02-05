@@ -1,6 +1,6 @@
 import os
 import re
-from werkzeug.utils import secure_filename
+import unicodedata
 
 class PathTraversal:
     """
@@ -68,12 +68,66 @@ class PathTraversal:
         
         return file_ext in self.allowed_extensions
 
+    def secure_filename(self, filename):
+        """
+        Secure a filename by removing dangerous characters.
+        
+        This is a replacement for werkzeug's secure_filename function.
+        It performs the following operations:
+        1. Normalizes unicode characters
+        2. Removes path separators and other dangerous characters
+        3. Removes leading/trailing dots and spaces
+        4. Converts to ASCII, replacing non-ASCII characters with underscores
+        5. Limits filename length
+        
+        Args:
+            filename (str): The filename to secure
+        
+        Returns:
+            str: A secured version of the filename, or an empty string if invalid
+        
+        Example:
+            >>> validator = PathTraversal()
+            >>> validator.secure_filename('../../../etc/passwd')
+            'etc_passwd'
+            >>> validator.secure_filename('My Document.pdf')
+            'My_Document.pdf'
+        """
+        if not filename:
+            return ""
+
+        # Normalize unicode
+        filename = unicodedata.normalize('NFKD', filename)
+        
+        # Convert to ASCII, ignoring non-ASCII characters
+        filename = filename.encode('ASCII', 'ignore').decode('ASCII')
+        
+        # Remove path separators and other dangerous characters
+        filename = re.sub(r'[\\/*?:"<>|]', '', filename)
+        
+        # Replace spaces with underscores
+        filename = filename.replace(' ', '_')
+        
+        # Remove leading/trailing dots, underscores and spaces
+        filename = filename.strip('._ ')
+        
+        # Limit filename length (255 is common max for most filesystems)
+        if len(filename) > 255:
+            name, ext = os.path.splitext(filename)
+            filename = name[:255 - len(ext)] + ext
+        
+        # If filename becomes empty after cleaning, return a default
+        if not filename:
+            filename = "file"
+            
+        return filename
+
     def safe_join(self, base_dir, filename):
         """
         Safely join a base directory with a filename, preventing path traversal attacks.
         
         This method:
-        1. Sanitizes the filename using werkzeug's secure_filename
+        1. Sanitizes the filename using secure_filename method
         2. Converts both paths to absolute paths
         3. Ensures the resulting path is within the base directory
         4. Returns None if any security check fails
@@ -95,14 +149,27 @@ class PathTraversal:
             >>> validator.safe_join('/var/www/uploads', 'myfile.pdf')
             '/var/www/uploads/myfile.pdf'
         """
-        filename = secure_filename(filename)
+        # Secure the filename using our own implementation
+        filename = self.secure_filename(filename)
         if not filename:
             return None
         
-        full_path = os.path.abspath(os.path.join(base_dir, filename))
-        base_dir = os.path.abspath(base_dir)
+        # Ensure base directory exists
+        if not os.path.exists(base_dir):
+            try:
+                os.makedirs(base_dir, exist_ok=True)
+            except (OSError, PermissionError):
+                return None
+        
+        # Join paths and get absolute paths
+        try:
+            full_path = os.path.abspath(os.path.join(base_dir, filename))
+            base_dir_abs = os.path.abspath(base_dir)
+        except (TypeError, ValueError):
+            return None
 
-        if not full_path.startswith(base_dir):
+        # Check if the resulting path is within the base directory
+        if not full_path.startswith(base_dir_abs):
             return None
         
         return full_path
