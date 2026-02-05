@@ -1,8 +1,8 @@
-# Hash Server 🔒
+# Hash Server
 
 A secure file encryption and text encoding server with web interface and admin tools. Built with Flask (Python) and Rust client.
 
-## Features ✨
+## Features
 
 - **File Encryption/Decryption** - XOR cipher with password protection
 - **Base64 Encoding** - Text encoding/decoding via web interface
@@ -13,19 +13,19 @@ A secure file encryption and text encoding server with web interface and admin t
 - **Cross-platform Clients** - Python and Rust admin clients
 - **Comprehensive Logging** - Detailed server activity logs
 
-## Quick Start 🚀
+## Quick Start
 
 ### Prerequisites
 - Python 3.8+
 - Rust (for admin client)
-- Flask
+- FastAPI
 
 ### Installation
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/serbekun/hash-server.git
-cd hash-server
+git clone https://github.com/serbekun/hash_server.git
+cd hash_server
 ```
 
 2. **Install Python dependencies**
@@ -47,7 +47,7 @@ python main.py
 
 The server will start at `http://your_server_ip:2222`
 
-## Usage 📖
+## Usage
 
 ### Web Interface
 - **Main Page**: `http://your_server_ip:2222/`
@@ -75,7 +75,7 @@ cargo run
 ```
 Available commands: `admin`, `clear_uploads`, `list_uploads`, `log`, `set_token`
 
-## API Documentation 🔧
+## API Documentation
 
 ### File Processing
 ```http
@@ -104,7 +104,7 @@ All admin endpoints require valid token in JSON body:
 {"token": "admin_your_token_here"}
 ```
 
-## Project Structure 🗂️
+## Project Structure
 
 ```
 hash_server/
