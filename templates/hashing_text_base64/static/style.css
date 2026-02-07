@@ -379,3 +379,31 @@ button {
 .resize-none {
     resize: none;
 }
+
+.hidden {
+    display: none !important;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+}
+
+.loading.show {
+    display: block;
+}
+
+.spinner {
+    border: 3px solid #4a5568;
+    border-top: 3px solid #4299e1;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -14,8 +14,9 @@ from src.logging_utils import Logging
 
 # adding other routers
 from src.routes.admin_routes.admin_routes import router as admin_router
-from src.routes.process_file.process_file import router as process_file_router
+from src.routes.process_file.main import router as process_file_router
 from src.routes.base64.main import router as base64_router
+from src.routes.pages.main import router as pages_router
 
 # Initialize FastAPI app
 app = FastAPI(title="Hash Server")
@@ -27,31 +28,20 @@ download_tokens = Tokens(
     token_start="download_"
 )
 
+# Include routers
+app.include_router(admin_router, prefix="/v0/admin", tags=["admin"])
+app.include_router(process_file_router, prefix="/v0/hashing_file", tags=["hashing"])
+app.include_router(base64_router, prefix="/v0/api/base64", tags=["hashing"])
+app.include_router(pages_router, prefix="/v0/pages", tags=["pages"])
+
+# Mount static files for templates
+app.mount("/static", StaticFiles(directory="templates"), name="static")
+
 # Web index of this site
 @app.get("/")
 async def ok(request: Request):
     Logging.server_log(f"{request.client.host} request /")
     file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.MAIN_SITE, "index.html")
-    return FileResponse(file_path)
-
-# Include routers
-app.include_router(admin_router, prefix="/admin", tags=["admin"])
-app.include_router(process_file_router, prefix="/hashing_file", tags=["hashing"])
-app.include_router(base64_router, prefix="", tags=["hashing"])
-
-# Mount static files
-app.mount("/templates", StaticFiles(directory="templates"), name="templates")
-
-@app.get("/hashing_file")
-async def hashing_photo():
-    file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.HASHING_FILE_SITE, "index.html")
-    return FileResponse(file_path)
-
-
-@app.get("/hashing_text_base64")
-async def hashing_text_base64(request: Request):
-    Logging.server_log(f"{request.client.host} request hashing_text_base64 html")
-    file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.HASHING_TEXT_BASE64, "index.html")
     return FileResponse(file_path)
 
 
@@ -121,7 +111,7 @@ def main():
         "src.server:app",
         host=Config.Link.HOST,
         port=Config.Link.PORT,
-        reload=False,
+        reload=True,
         log_level="info"
     )
 

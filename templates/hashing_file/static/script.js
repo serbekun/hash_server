@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         processBtn.disabled = true;
         showStatus('Processing file...', '');
 
-        fetch('/hashing_file/process_file', {
+        fetch('/v0/hashing_file/process_file', {
             method: 'POST',
             body: formData
         })
