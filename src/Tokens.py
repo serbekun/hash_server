@@ -28,13 +28,14 @@ class Tokens:
         ```
         """
 
-        self.tokens: list = []
+        self.tokens: set[str] = set()
         self.tokens_file = tokens_file
         self.symbols = symbols
         self.tokens_length = tokens_length
         self.token_start = token_start
 
-
+        self.read_tokens()
+    
     def gen_token(self) -> str:
         token = ''.join(
             secrets.choice(self.symbols)
@@ -42,7 +43,7 @@ class Tokens:
         )
         return self.token_start + token
 
-    def add_token(self, token: str):
+    def add_token(self, token: str) -> bool:
         """
         # add new token to file if that not exist
         
@@ -56,7 +57,7 @@ class Tokens:
         ```
         """
         if token not in self.tokens:
-            self.tokens.append(token)
+            self.tokens.add(token)
             return True
         return False
 
@@ -92,11 +93,7 @@ class Tokens:
             print(f"Token {token} doesn't exist")
         ```
         """
-        try:
-            self.tokens.index(token)
-            return True
-        except ValueError:
-            return False
+        return token in self.tokens
 
 
     def read_tokens(self):
@@ -104,7 +101,7 @@ class Tokens:
         Function for load tokens from file
         """
         if not os.path.exists(self.tokens_file):
-            return []
+            self.tokens = []
         with open(self.tokens_file, "r", encoding="utf-8") as f:
             self.tokens = [line.strip() for line in f if line.strip()]
 
