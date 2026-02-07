@@ -7,7 +7,7 @@ from src.Tokens import Tokens
 
 router = APIRouter()
 
-admin_tokens = Tokens(token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.ADMIN_TOKENS, token_length=15, token_start="admin_")
+admin_tokens = Tokens(tokens_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.ADMIN_TOKENS, tokens_length=15, token_start="admin_")
 
 @router.post("/")
 async def admin(request: Request):

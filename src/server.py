@@ -9,7 +9,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.config import Config
-from src.Tokens import Tokens
 from src.logging_utils import Logging
 
 # adding other routers
@@ -20,13 +19,6 @@ from src.routes.pages.main import router as pages_router
 
 # Initialize FastAPI app
 app = FastAPI(title="Hash Server")
-
-# Initialize download tokens
-download_tokens = Tokens(
-    token_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.DOWNLOAD_TOKENS,
-    token_length=15,
-    token_start="download_"
-)
 
 # Include routers
 app.include_router(admin_router, prefix="/v0/admin", tags=["admin"])
@@ -43,52 +35,6 @@ async def ok(request: Request):
     Logging.server_log(f"{request.client.host} request /")
     file_path = os.path.join(Config.Paths.Sites.SITES_FOLDER, Config.Paths.Sites.MAIN_SITE, "index.html")
     return FileResponse(file_path)
-
-
-@app.post("/download/hashing_photo/{filename}")
-async def download_file(filename: str, request: Request):
-    Logging.server_log(f"{request.client.host} download request for {filename}")
-
-    path = os.path.join(Config.Paths.Client.UPLOADS, filename)
-
-    try:
-        data = await request.json()
-    except:
-        Logging.server_log("  Error: Invalid JSON")
-        return {"error": "Invalid JSON"}, 400
-
-    if not data or "token" not in data:
-        Logging.server_log("  Error: token missing")
-        return {"error": "Error: token missing"}, 400
-
-    token = data["token"]
-    if not download_tokens.check_token(token):
-        Logging.server_log(" Permission denied")
-        return {"error": "Permission denied"}, 403
-
-    download_tokens.remove_token(token)
-
-    try:
-        response = FileResponse(
-            path,
-            media_type="application/octet-stream",
-            filename=filename
-        )
-        
-        # Delete file after download
-        def cleanup():
-            try:
-                os.remove(path)
-                Logging.server_log(f"  Deleted {path}")
-            except Exception as e:
-                Logging.server_log(f"  Error deleting {path}: {e}")
-
-        # Note: In FastAPI, file deletion needs to be handled differently
-        # This is a background task that can be implemented with BackgroundTasks
-        return response
-    except FileNotFoundError:
-        Logging.server_log(f"  File not found: {path}")
-        return {"error": "File not found"}, 404
 
 
 def create_server_dirs():

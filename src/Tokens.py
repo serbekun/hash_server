@@ -62,7 +62,6 @@ class Tokens:
         return False
 
 
-
     def remove_token(self, token: str) -> bool:
         """
         # remove token from file
@@ -100,12 +99,20 @@ class Tokens:
         """
         Function for load tokens from file
         """
+        self.tokens = set()  # start with empty set
         if not os.path.exists(self.tokens_file):
-            self.tokens = []
-        with open(self.tokens_file, "r", encoding="utf-8") as f:
-            self.tokens = [line.strip() for line in f if line.strip()]
+            return
+        try:
+            with open(self.tokens_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    token = line.strip()
+                    if token:
+                        self.tokens.add(token)
+        except Exception as e:
+            # optional: log error, but don't crash the app
+            print(f"Warning: could not read tokens file {self.tokens_file}: {e}")
 
-    
+        
     def write_tokens(self):
         """
         Function for save tokens to file 

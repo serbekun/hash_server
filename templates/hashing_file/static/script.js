@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showStatus('Downloading file...', '');
 
-        fetch('/download/hashing_photo/' + filename, {
+        fetch('/v0/hashing_file/download/hashing_file/' + filename, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
