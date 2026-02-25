@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Request, UploadFile, File, Form
 import os
 from fastapi.responses import JSONResponse, FileResponse
+from typing import Optional
 
 router = APIRouter()
 
 from src.logging_utils import Logging
 from src.path_traversal_check import PathTraversal
 from src.config import Config
-from src.XORFileCipher import encrypt_file, decrypt_file
+from src.aes_crypto import encrypt_file, decrypt_file
 from src.Tokens import Tokens
 
 download_tokens = Tokens(tokens_file=Config.Paths.Tokens.TOKENS_FOLDER + Config.Paths.Tokens.DOWNLOAD_TOKENS, tokens_length=15, token_start="download_")
@@ -18,7 +19,8 @@ path_traversal = PathTraversal()
 async def process_file(
     request: Request,
     file: UploadFile = File(...),
-    password: str = Form(...),
+    key: Optional[str] = Form(None),
+    password: Optional[str] = Form(None),
     mode: str = Form(...)
 ):
     Logging.server_log(f"{request.client.host} request process_file")
@@ -43,14 +45,14 @@ async def process_file(
             Logging.server_log(f"  Error: Invalid filename {file.filename}")
             return JSONResponse({"error": "Invalid filename"}, status_code=400)
 
-        password = password.strip()
-        if not password:
-            Logging.server_log("  Error: Password is required")
-            return JSONResponse({"error": "Password is required"}, status_code=400)
+        provided_key = (key or password or "").strip()
+        if not provided_key:
+            Logging.server_log("  Error: AES key is required")
+            return JSONResponse({"error": "AES key is required"}, status_code=400)
 
-        if len(password) < 4:
-            Logging.server_log("  Error: Password too short")
-            return JSONResponse({"error": "Password must be at least 4 characters"}, status_code=400)
+        if len(provided_key) < 4:
+            Logging.server_log("  Error: AES key too short")
+            return JSONResponse({"error": "AES key must be at least 4 characters"}, status_code=400)
 
         if mode not in ['encrypt', 'decrypt']:
             Logging.server_log(f"  Error: Invalid mode {mode}")
@@ -75,9 +77,9 @@ async def process_file(
 
         try:
             if mode == 'encrypt':
-                output_path = encrypt_file(safe_file_path, password)
+                output_path = encrypt_file(safe_file_path, provided_key)
             else:
-                output_path = decrypt_file(safe_file_path, password)
+                output_path = decrypt_file(safe_file_path, provided_key)
         except Exception as crypto_error:
             Logging.server_log(f"  Crypto error: {str(crypto_error)}")
             if os.path.exists(safe_file_path):
@@ -155,4 +157,3 @@ async def download_file(filename: str, request: Request):
     except FileNotFoundError:
         Logging.server_log(f"  File not found: {path}")
         return {"error": "File not found"}, 404
-

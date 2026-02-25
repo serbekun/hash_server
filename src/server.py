@@ -14,7 +14,7 @@ from src.logging_utils import Logging
 # adding other routers
 from src.routes.admin_routes.admin_routes import router as admin_router
 from src.routes.process_file.main import router as process_file_router
-from src.routes.base64.main import router as base64_router
+from src.routes.base64.main import router as aes_router
 from src.routes.pages.main import router as pages_router
 
 # Initialize FastAPI app
@@ -23,7 +23,7 @@ app = FastAPI(title="Hash Server")
 # Include routers
 app.include_router(admin_router, prefix="/v0/admin", tags=["admin"])
 app.include_router(process_file_router, prefix="/v0/hashing_file", tags=["hashing"])
-app.include_router(base64_router, prefix="/v0/api/base64", tags=["hashing"])
+app.include_router(aes_router, prefix="/v0/api/aes", tags=["hashing"])
 app.include_router(pages_router, prefix="/v0/pages", tags=["pages"])
 
 # Mount static files for templates

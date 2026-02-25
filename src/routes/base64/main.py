@@ -1,74 +1,56 @@
 from fastapi import APIRouter, Request
-import base64
 
 router = APIRouter()
 
 from src.logging_utils import Logging
+from src.aes_crypto import encrypt_text_to_base64, generate_aes_key
 
-@router.post("/encode")
-async def base64_encode(request: Request):
-    """
-    Endpoint /v0/api/base64/encode
 
-    encode string to base64 format
+@router.post("/encrypt_text")
+async def aes_encrypt_text(request: Request):
     """
-    Logging.server_log(f"{request.client.host} request /v0/api/base64/encode")
-    
-    # getting data from client
+    Endpoint /v0/api/aes/encrypt_text
+
+    Encrypt text with AES and return Base64 payload.
+    """
+    Logging.server_log(f"{request.client.host} request /v0/api/aes/encrypt_text")
+
     try:
         data = await request.json()
-    except:
+    except Exception:
         Logging.server_log("  Error: Invalid JSON")
         return {"error": "Invalid JSON"}, 400
 
-    # validate data
-    if not data or "text" not in data:
-        Logging.server_log(f"  Error: text and is not requested")
-        return {"error": "JSON must contain 'text'\n"}, 400
+    if not data or "text" not in data or "key" not in data:
+        Logging.server_log("  Error: text or key is missing")
+        return {"error": "JSON must contain 'text' and 'key'"}, 400
 
-    # getting data from json
-    text: str = data["text"]
+    text = str(data["text"])
+    key = str(data["key"]).strip()
 
-    # encoding string to base64
-    bytes_data = text.encode('utf-8')
-    encoded_bytes = base64.b64encode(bytes_data)
-    processed_text = encoded_bytes.decode('ascii')
+    if not key:
+        Logging.server_log("  Error: AES key is empty")
+        return {"error": "AES key is required"}, 400
 
-    # send to client encoded string
-    return {"result": processed_text}
+    if len(key) < 4:
+        Logging.server_log("  Error: AES key too short")
+        return {"error": "AES key must be at least 4 characters"}, 400
 
-
-@router.post("/decode")
-async def base64_decode(request: Request):
-    """
-    Endpoint /v0/api/base64/decode
-
-    decode base64 format to string
-    """
-    Logging.server_log(f"{request.client.host} request /v0/api/base64/decode")
-
-    # getting data from client
     try:
-        data = await request.json()
-    except:
-        Logging.server_log("  Error: Invalid JSON")
-        return {"error": "Invalid JSON"}, 400
+        encrypted = encrypt_text_to_base64(text, key)
+    except Exception as error:
+        Logging.server_log(f"  Error: AES encryption failed: {error}")
+        return {"error": "AES encryption failed"}, 500
 
-    # validate data
-    if not data or "text" not in data or "mod" not in data:
-        Logging.server_log(f"  Error: text is not requested")
-        return {"error": "JSON must contain 'text'\n"}, 400
+    return {"result": encrypted}
 
-    # getting data from json
-    text = data["text"]
 
-    # decoding to string
-    try:
-        decoded_bytes = base64.b64decode(text)
-        processed_text = decoded_bytes.decode('utf-8')
-    except Exception as e:
-        Logging.server_log(f"  Error: encoding base64 was not successfully")
-        return {"error": f"Error decoding base64: {str(e)}\n"}, 400
-    
-    # send decoded base64 to client
-    return {"result": processed_text}
+@router.get("/generate_key")
+async def aes_generate_key(request: Request):
+    """
+    Endpoint /v0/api/aes/generate_key
+
+    Generate a random key for AES operations.
+    """
+    Logging.server_log(f"{request.client.host} request /v0/api/aes/generate_key")
+    return {"key": generate_aes_key()}

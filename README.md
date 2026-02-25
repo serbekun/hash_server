@@ -4,8 +4,8 @@ A secure file encryption and text encoding server with web interface and admin t
 
 ## Features
 
-- **File Encryption/Decryption** - XOR cipher with password protection
-- **Base64 Encoding** - Text encoding/decoding via web interface
+- **File Encryption/Decryption** - AES encryption with key-based processing
+- **AES Text Encryption** - Encrypt text and return Base64 payload
 - **Secure File Upload** - Path traversal protection and file validation
 - **Token-based Authentication** - Secure admin and download access
 - **Web Interface** - User-friendly web UI for all operations
@@ -52,7 +52,7 @@ The server will start at `http://your_server_ip:2222`
 ### Web Interface
 - **Main Page**: `http://your_server_ip:2222/`
 - **File Encryption**: `http://your_server_ip:2222/hashing_file`
-- **Base64 Tools**: `http://your_server_ip:2222/hashing_text_base64`
+- **AES Text Encryption**: `http://your_server_ip:2222/hashing_text_base64`
 
 ### File Encryption
 1. Upload any file through the web interface
@@ -87,15 +87,20 @@ password: [string]
 mode: encrypt|decrypt
 ```
 
-### Base64 Encoding
+### AES Text Encryption
 ```http
-POST /base64
+POST /v0/api/aes/encrypt_text
 Content-Type: application/json
 
 {
   "text": "string",
-  "mod": "1"  // 1=encode, 2=decode
+  "key": "string"
 }
+```
+
+### Generate AES Key
+```http
+GET /v0/api/aes/generate_key
 ```
 
 ### Admin Endpoints

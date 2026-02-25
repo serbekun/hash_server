@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('fileInput');
     const fileLabel = document.getElementById('fileLabel');
     const fileName = document.getElementById('fileName');
-    const passwordInput = document.getElementById('password');
+    const keyInput = document.getElementById('password');
     const processBtn = document.getElementById('processBtn');
     const statusDiv = document.getElementById('status');
     const downloadLink = document.getElementById('downloadLink');
@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (!passwordInput.value) {
-            showStatus('Please enter a password', 'error');
+        if (!keyInput.value) {
+            showStatus('Please enter an AES key', 'error');
             return;
         }
 
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function processFile() {
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
-        formData.append('password', passwordInput.value);
+        formData.append('key', keyInput.value);
         formData.append('mode', currentMode);
 
         processBtn.disabled = true;

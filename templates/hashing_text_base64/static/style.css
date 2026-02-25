@@ -204,6 +204,12 @@ textarea {
     font-size: inherit;
 }
 
+textarea.single-line {
+    height: auto;
+    min-height: 3rem;
+    resize: vertical;
+}
+
 textarea:focus {
     outline: none;
     box-shadow: 0 0 0 2px #1976d2;
